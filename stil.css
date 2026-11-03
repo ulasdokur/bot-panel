@@ -1,0 +1,92 @@
+/* Tahta Bot Paneli. Renkler destek paneliyle aynı (Figma Tahta), çizgiler gri. */
+:root{
+  --sayfa:#f7f7f8; --yuzey:#fff; --yuzey2:#f3f3f5; --cizgi:#e4e4e7; --cizgi2:#d4d4d8;
+  --metin:#212121; --metin2:#5d5d5d; --soluk:#8a8a8a;
+  --marka:#8b4cfc; --marka-metin:#7a30f0; --marka-zemin:#f1ebff;
+  --hata:#bb241a; --hata-zemin:#fef3f2; --uyari:#b04f0d; --uyari-zemin:#fffbeb; --basari:#09724e; --basari-zemin:#eefff8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--sayfa);color:var(--metin);font:13px/1.5 Poppins,-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit;padding:0}
+input,textarea,select{font:inherit;color:var(--metin);background:var(--yuzey);border:1px solid var(--cizgi2);border-radius:8px;padding:7px 11px;width:100%}
+textarea{resize:vertical;line-height:1.55}
+input:focus,textarea:focus,select:focus{outline:2px solid #8b4cfc55;border-color:var(--marka)}
+label{display:block;font-size:12px;font-weight:500;color:var(--metin2);margin:12px 0 0}
+label>input,label>textarea,label>select{margin-top:4px}
+[hidden]{display:none!important}
+svg.lucide{width:15px;height:15px;flex-shrink:0}
+h1{font-size:18px;font-weight:600;margin:0}
+h2{font-size:14px;font-weight:600;margin:0}
+
+.birincil,.ikincil,.tehlike{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px;border-radius:8px;font-weight:500;white-space:nowrap}
+.birincil{background:var(--marka);color:#fff}.birincil:hover{filter:brightness(.95)}
+.ikincil{border:1px solid var(--cizgi2);background:var(--yuzey)}.ikincil:hover{background:var(--yuzey2)}
+.tehlike{border:1px solid #f3c7c3;color:var(--hata);background:var(--yuzey)}
+.tam{width:100%;justify-content:center;margin-top:16px;height:38px}
+button:disabled{opacity:.5;cursor:default}
+.ince{display:flex;align-items:center;gap:6px;color:var(--metin2);font-size:12px}
+.hata{color:var(--hata);font-size:12px;min-height:18px;margin-top:8px}
+
+#giris{min-height:100%;display:grid;place-items:center}
+.giris-kutu{width:340px;background:var(--yuzey);border:1px solid var(--cizgi);border-radius:14px;padding:28px}
+.giris-logo{height:22px}.giris-kutu h1{margin-top:18px}.giris-kutu p{color:var(--metin2);margin:2px 0 0}
+
+#uygulama{display:flex;height:100vh}
+.yan{width:210px;flex-shrink:0;background:var(--yuzey);border-right:1px solid var(--cizgi);display:flex;flex-direction:column;padding:14px 10px}
+.yan-ust{display:flex;align-items:center;gap:8px;padding:2px 8px 14px}.yan-ust img{height:16px}
+.yan-ust span{font-size:11px;font-weight:600;color:var(--marka-metin);background:var(--marka-zemin);border-radius:6px;padding:1px 7px}
+nav button{display:flex;align-items:center;gap:9px;width:100%;padding:7px 9px;border-radius:8px;color:var(--metin2);font-weight:500}
+nav button:hover{background:var(--yuzey2)}
+nav button.secili{background:var(--marka-zemin);color:var(--marka-metin)}
+.rozet{margin-left:auto;font-size:11px;background:var(--marka);color:#fff;border-radius:9px;padding:0 6px;line-height:17px}.rozet:empty{display:none}
+.yan-alt{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding:0 8px}
+.kim{display:flex;flex-direction:column;font-size:12px}.kim span{color:var(--soluk)}
+.mod-kutu{font-size:12px;border:1px solid var(--cizgi);border-radius:8px;padding:7px 9px}
+.mod-kutu b{display:block}
+
+main{flex:1;overflow:auto;padding:22px 26px}
+.baslik{display:flex;align-items:center;gap:10px;margin-bottom:14px}.baslik .sag{margin-left:auto;display:flex;gap:8px}
+.alt-metin{color:var(--metin2);margin:-8px 0 14px}
+.kart{background:var(--yuzey);border:1px solid var(--cizgi);border-radius:12px}
+.bos{padding:40px;text-align:center;color:var(--soluk)}
+
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:500;color:var(--soluk);padding:8px 12px;border-bottom:1px solid var(--cizgi)}
+td{padding:9px 12px;border-bottom:1px solid var(--cizgi);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tr.tik{cursor:pointer}tr.tik:hover td{background:var(--yuzey2)}
+.soluk{color:var(--soluk)}.kucuk{font-size:12px}
+.etiket{display:inline-block;font-size:11px;font-weight:500;border-radius:6px;padding:0 7px;line-height:19px;background:var(--yuzey2);color:var(--metin2)}
+.etiket.mor{background:var(--marka-zemin);color:var(--marka-metin)}
+.etiket.yesil{background:var(--basari-zemin);color:var(--basari)}
+.etiket.sari{background:var(--uyari-zemin);color:var(--uyari)}
+.etiket.kirmizi{background:var(--hata-zemin);color:var(--hata)}
+
+.filtre{display:flex;gap:8px;margin-bottom:12px}.filtre input{max-width:260px}.filtre select{max-width:180px}
+
+/* sohbet ayrıntısı */
+.iki{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px;align-items:start}
+.akis{padding:14px;display:flex;flex-direction:column;gap:8px}
+.balon{max-width:78%;padding:8px 11px;border-radius:10px;white-space:pre-wrap;word-break:break-word}
+.balon .ust{font-size:11px;color:var(--soluk);margin-bottom:2px}
+.balon.musteri{background:var(--yuzey2);align-self:flex-start}
+.balon.temsilci,.balon.vivollo{background:#eef4ff;align-self:flex-end}
+.balon.bot{background:var(--marka-zemin);align-self:flex-end;border:1px dashed #c9b3ff}
+.tur{padding:12px 14px;border-bottom:1px solid var(--cizgi)}.tur:last-child{border-bottom:0}
+.tur pre{white-space:pre-wrap;font:12px/1.5 ui-monospace,Menlo,monospace;background:var(--yuzey2);border-radius:8px;padding:8px;margin:6px 0 0;max-height:240px;overflow:auto}
+
+/* bilgi / talimat */
+.duzen{padding:16px}
+.duzen textarea.buyuk{min-height:58vh;font:12px/1.55 ui-monospace,Menlo,monospace}
+.dugmeler{display:flex;gap:8px;margin-top:14px;align-items:center}
+.kisa{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--metin2);font-size:12px}
+.ayar-satir{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--cizgi)}.ayar-satir:last-child{border-bottom:0}
+.ayar-satir div{flex:1}.ayar-satir p{margin:2px 0 0;color:var(--metin2);font-size:12px}
+.ayar-satir select,.ayar-satir input{width:220px}
+.secenek{display:flex;gap:6px}.secenek button{height:30px;padding:0 12px;border:1px solid var(--cizgi2);border-radius:8px}
+.secenek button.secili{background:var(--marka);border-color:var(--marka);color:#fff}
+
+#bildirim{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#212121;color:#fff;padding:9px 16px;border-radius:9px;font-size:13px;z-index:9}
+dialog{border:1px solid var(--cizgi);border-radius:12px;padding:20px;width:min(560px,92vw)}
+dialog::backdrop{background:#0004}

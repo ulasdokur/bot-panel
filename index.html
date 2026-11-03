@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Bot Paneli · Tahta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="stil.css?v=1">
+</head>
+<body>
+<div id="giris" hidden>
+  <form class="giris-kutu" id="giris-form">
+    <img src="logo.png" alt="TAHTA" class="giris-logo">
+    <h1>Bot paneli</h1><p>Destek paneli hesabınla giriş yap.</p>
+    <label>E-posta<input type="email" id="g-eposta" autocomplete="username" required></label>
+    <label>Şifre<input type="password" id="g-sifre" autocomplete="current-password" required></label>
+    <button class="birincil tam" type="submit">Giriş yap</button>
+    <div class="hata" id="g-hata"></div>
+  </form>
+</div>
+
+<div id="uygulama" hidden>
+  <aside class="yan">
+    <div class="yan-ust"><img src="logo.png" alt="TAHTA"><span>Bot</span></div>
+    <nav id="sekmeler">
+      <button data-s="sohbet"><i data-lucide="messages-square"></i>Sohbetler</button>
+      <button data-s="bosluk"><i data-lucide="circle-help"></i>Bilgi boşlukları<b class="rozet" id="r-bosluk"></b></button>
+      <button data-s="bilgi"><i data-lucide="book-open"></i>Bilgi</button>
+      <button data-s="talimat"><i data-lucide="scroll-text"></i>Talimat</button>
+      <button data-s="ayar"><i data-lucide="settings"></i>Ayarlar</button>
+    </nav>
+    <div class="yan-alt">
+      <div class="mod-kutu" id="mod-kutu"></div>
+      <div class="kim"><b class="k-ad"></b><span class="k-rol"></span></div>
+      <button class="ince" id="cikis"><i data-lucide="log-out"></i>Çıkış</button>
+    </div>
+  </aside>
+  <main id="icerik"></main>
+</div>
+<div id="bildirim" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js" integrity="sha384-ieG+IKD0d/ZPXyCBTMVAbqsQdns8QGJR/e26WMw7M4fkaI/rHcS/YIoi+ah9WGge" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug" crossorigin="anonymous"></script>
+<script src="app.js?v=1"></script>
+</body>
+</html>
