@@ -3,6 +3,7 @@
 // Giriş destek paneliyle aynı hesaplar (d_yetkili). Talimat yayımı ve ayarlar yalnız yönetici.
 const SB_URL = "https://rbjrnevngfuribasrnph.supabase.co";
 const SB_ANON = "sb_publishable_yK1dNA6CGKIQ88U3gp53xA_nBLQGNVJ";
+const MOTOR = "https://2-28-141-221.sslip.io";
 const sb = window.supabase.createClient(SB_URL, SB_ANON);
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -48,7 +49,7 @@ function git(s, id, hashtenGeldi) {
   sekme = s; git.son = id;
   document.querySelectorAll("#sekmeler button").forEach(b => b.classList.toggle("secili", b.dataset.s === s));
   if (!hashtenGeldi) history.replaceState(null, "", "#" + s + (id ? "/" + id : ""));
-  const f = { sohbet: id ? sohbetAyrinti : sohbetler, bosluk: bosluklar, bilgi: id ? bilgiDuzen : bilgiler, talimat: id ? talimatDuzen : talimatlar, ayar: ayarlar }[s] || sohbetler;
+  const f = { sohbet: id ? sohbetAyrinti : sohbetler, bosluk: bosluklar, bilgi: id ? bilgiDuzen : bilgiler, talimat: id ? talimatDuzen : talimatlar, ayar: ayarlar, dene: denemeEkrani }[s] || sohbetler;
   $("#icerik").innerHTML = '<div class="bos">Yükleniyor…</div>';
   f(id).then(ikon).catch(e => { $("#icerik").innerHTML = `<div class="bos">Yüklenemedi: ${esc(e.message)}</div>`; });
 }
@@ -203,6 +204,62 @@ async function ayarlar() {
     await yaz("test_kanallar", $("#test").value.split(",").map(s => s.trim()).filter(Boolean));
     bildir("Kaydedildi."); modGoster();
   };
+}
+
+// ---------- dene ----------
+// Sahte sohbet: bot cevabı + arka planda ne yaptığı (araçlar, süre, token, maliyet). Hiçbir şey kaydedilmez, hiçbir dış sistem çağrılmaz.
+const dene = { mesajlar: [], turlar: [], toplam: 0 };
+async function denemeEkrani() {
+  const [a, tl] = await Promise.all([ayarOku(), sb.from("b_talimat").select("id,durum,aciklama").neq("durum", "eski").order("id", { ascending: false })]);
+  $("#icerik").innerHTML = `<div class="baslik"><h1>Dene</h1><div class="sag">
+      <select id="d-talimat" style="width:230px">${(tl.data || []).map(t => `<option value="${t.id}">#${t.id} ${t.durum === "yayinda" ? "yayında" : "taslak"} · ${esc((t.aciklama || "").slice(0, 28))}</option>`).join("")}</select>
+      <select id="d-model" style="width:140px">${["gpt-5.4-mini", "gpt-5.4"].map(m => `<option ${a.model?.ad === m ? "selected" : ""}>${m}</option>`).join("")}</select>
+      <select id="d-efor" style="width:100px">${["low", "medium", "high"].map(e => `<option ${a.model?.efor === e ? "selected" : ""}>${e}</option>`).join("")}</select>
+      <button class="ikincil" id="d-sifirla"><i data-lucide="rotate-ccw"></i>Sıfırla</button></div></div>
+    <p class="alt-metin">Müşteri gibi yaz, bot cevap versin. Araçlar gerçekten çalıştırılmaz, yalnız "şunu çağırırdı" diye gösterilir. Hiçbir şey kaydedilmez.</p>
+    <div class="iki"><div class="kart dene-sol"><div class="akis" id="d-akis"></div>
+      <form class="dene-yaz" id="d-form"><textarea id="d-metin" rows="2" placeholder="Müşteri mesajı… (Enter gönderir, Shift+Enter alt satır)"></textarea><button class="birincil" id="d-gonder"><i data-lucide="send"></i>Gönder</button></form></div>
+      <div class="kart"><div class="tur"><h2>Arka plan</h2><div class="soluk kucuk" id="d-toplam"></div></div><div id="d-turlar"></div></div></div>`;
+  const ciz = () => {
+    $("#d-akis").innerHTML = dene.mesajlar.map(m => m.kimden === "not" ? `<div class="dene-not">${esc(m.metin)}</div>`
+      : `<div class="balon ${m.kimden === "musteri" ? "musteri" : "bot"}"><div class="ust">${m.kimden === "musteri" ? "Müşteri" : "Bot"}</div>${esc(m.metin)}</div>`).join("") || '<div class="bos">Bir müşteri mesajı yazarak başla.</div>';
+    $("#d-akis").scrollTop = 1e9;
+    $("#d-toplam").textContent = dene.turlar.length ? `${dene.turlar.length} tur · toplam $${dene.toplam.toFixed(4)}` : "Her turda süre, düşünme, araçlar ve maliyet burada görünür.";
+    $("#d-turlar").innerHTML = dene.turlar.slice().reverse().map((t, i) => {
+      const n = dene.turlar.length - i, k = t.token || {};
+      return `<div class="tur">
+      <div><b>Tur ${n}</b> ${t.karar === "devam" ? '<span class="etiket">Devam</span>' : et(DEVIR, t.karar)}</div>
+      <div class="dene-olcu"><span><i data-lucide="timer"></i>${(t.sure_ms / 1000).toFixed(1)} sn</span><span><i data-lucide="brain"></i>${(k.dusunme || 0).toLocaleString("tr-TR")} düşünme token</span>
+        <span><i data-lucide="arrow-down-to-line"></i>${(k.girdi || 0).toLocaleString("tr-TR")} girdi${k.cache ? ` (${k.cache.toLocaleString("tr-TR")} önbellek)` : ""}</span><span><i data-lucide="arrow-up-from-line"></i>${(k.cikti || 0).toLocaleString("tr-TR")} çıktı</span>
+        <span><i data-lucide="coins"></i>$${Number(t.maliyet || 0).toFixed(4)}</span></div>
+      ${t.araclar?.length ? t.araclar.map(x => `<div class="kucuk" style="margin-top:8px"><span class="etiket mor">${esc(x.ad)}</span><pre>${esc(JSON.stringify(x.arg, null, 1))}</pre><div class="soluk">${esc(x.sonuc)}</div></div>`).join("") : '<div class="soluk kucuk" style="margin-top:8px">Araç çağırmadı.</div>'}
+      ${t.gerekce ? `<div class="kucuk" style="margin-top:8px"><b>Neden:</b> ${esc(t.gerekce)}</div>` : ""}
+      <div class="soluk kucuk" style="margin-top:6px">${esc(t.model?.ad || "")} · ${esc(t.model?.efor || "")} · talimat #${t.talimat?.id ?? "?"}</div>
+      ${t.hata ? `<div class="hata">${esc(t.hata)}</div>${t.ham ? `<pre>${esc(t.ham)}</pre>` : ""}` : ""}</div>`;
+    }).join("");
+    ikon();
+  };
+  const gonder = async ev => {
+    ev?.preventDefault(); const metin = $("#d-metin").value.trim(); if (!metin || gonder.mesgul) return;
+    gonder.mesgul = true; $("#d-gonder").disabled = true; $("#d-metin").value = "";
+    dene.mesajlar.push({ kimden: "musteri", metin }); ciz();
+    $("#d-akis").insertAdjacentHTML("beforeend", '<div class="dene-not">Bot düşünüyor…</div>');
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      const r = await fetch(MOTOR + "/dene", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + session.access_token },
+        body: JSON.stringify({ mesajlar: dene.mesajlar.filter(m => m.kimden !== "not"), talimat: +$("#d-talimat").value || null, model: { ad: $("#d-model").value, efor: $("#d-efor").value } }) });
+      const t = await r.json(); if (!r.ok) throw new Error(t.hata || r.status);
+      dene.turlar.push(t); dene.toplam += Number(t.maliyet || 0);
+      (t.mesajlar || []).forEach(m => dene.mesajlar.push({ kimden: "bot", metin: m }));
+      (t.araclar || []).forEach(x => dene.mesajlar.push({ kimden: "not", metin: (DEVIR[x.ad]?.[0] || x.ad) + " (gerçekte bu araç çalışırdı)" }));
+      if (!t.mesajlar?.length && !t.araclar?.length) dene.mesajlar.push({ kimden: "not", metin: "Bot bu mesaja cevap yazmadı." });
+    } catch (e) { dene.mesajlar.push({ kimden: "not", metin: "Hata: " + e.message }); }
+    gonder.mesgul = false; $("#d-gonder").disabled = false; ciz(); $("#d-metin").focus();
+  };
+  $("#d-form").onsubmit = gonder;
+  $("#d-metin").onkeydown = e => { if (e.key === "Enter" && !e.shiftKey) gonder(e); };
+  $("#d-sifirla").onclick = () => { dene.mesajlar = []; dene.turlar = []; dene.toplam = 0; ciz(); };
+  ciz(); $("#d-metin").focus();
 }
 
 basla();

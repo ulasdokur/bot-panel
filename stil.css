@@ -90,3 +90,12 @@ tr.tik{cursor:pointer}tr.tik:hover td{background:var(--yuzey2)}
 #bildirim{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#212121;color:#fff;padding:9px 16px;border-radius:9px;font-size:13px;z-index:9}
 dialog{border:1px solid var(--cizgi);border-radius:12px;padding:20px;width:min(560px,92vw)}
 dialog::backdrop{background:#0004}
+
+/* dene */
+.dene-sol{display:flex;flex-direction:column;height:calc(100vh - 150px)}
+.dene-sol .akis{flex:1;overflow:auto}
+.dene-yaz{display:flex;gap:8px;padding:10px;border-top:1px solid var(--cizgi);align-items:flex-end}
+.dene-yaz textarea{resize:none}
+.dene-not{align-self:center;font-size:11px;color:var(--soluk);background:var(--yuzey2);border-radius:6px;padding:2px 9px}
+.dene-olcu{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:6px;font-size:12px;color:var(--metin2)}
+.dene-olcu span{display:inline-flex;align-items:center;gap:4px}.dene-olcu svg.lucide{width:13px;height:13px}
