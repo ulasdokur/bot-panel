@@ -49,7 +49,7 @@ function git(s, id, hashtenGeldi) {
   sekme = s; git.son = id;
   document.querySelectorAll("#sekmeler button").forEach(b => b.classList.toggle("secili", b.dataset.s === s));
   if (!hashtenGeldi) history.replaceState(null, "", "#" + s + (id ? "/" + id : ""));
-  const f = { sohbet: id ? sohbetAyrinti : sohbetler, bosluk: bosluklar, bilgi: id ? bilgiDuzen : bilgiler, talimat: id ? talimatDuzen : talimatlar, ayar: ayarlar, dene: denemeEkrani }[s] || sohbetler;
+  const f = { sohbet: id ? sohbetAyrinti : sohbetler, bosluk: bosluklar, bilgi: id ? bilgiDuzen : bilgiler, talimat: id ? talimatDuzen : talimatlar, ayar: ayarlar, dene: denemeEkrani, akis: id ? akisGoster : akislar }[s] || sohbetler;
   $("#icerik").innerHTML = '<div class="bos">Yükleniyor…</div>';
   f(id).then(ikon).catch(e => { $("#icerik").innerHTML = `<div class="bos">Yüklenemedi: ${esc(e.message)}</div>`; });
 }
@@ -263,3 +263,155 @@ async function denemeEkrani() {
 }
 
 basla();
+
+// ---------- akış (salt görüntüleme) ----------
+// Vivollo akışlarının kopyası (b_akis). Yalnız gösterir; Vivollo'ya ya da canlı bota hiçbir şey yazmaz.
+// Gizli değerler (apikey, Authorization, p_token) tabloya yüklenirken "***" yapıldı.
+const DUGUM = {
+  START: ["Görüşme açıldı", "play", "tetik"], FALLBACK: ["Mesaj alındı", "message-circle", "tetik"], IDLE: ["Hareketsizlik", "timer", "tetik"],
+  RESOLVING: ["Çözülüyor", "loader", "tetik"], RESOLVED: ["Çözüldü", "circle-check", "tetik"],
+  SEND_MESSAGE: ["Mesaj gönder", "send", "mesaj"], CAPTURE_USER: ["Kullanıcı bilgilerini al", "user-pen", "mesaj"],
+  ASK_AI: ["Yapay zekâya sor", "sparkles", "yz"], AGENTIC_AI: ["Otonom yapay zekâ", "bot", "yz"], USER_INTENT: ["Kullanıcı niyeti", "target", "yz"],
+  SEARCH_DOCUMENTS: ["Belgelerde ara", "file-search", "yz"], REPLY_FROM_DOCUMENTS: ["Belgelerden yanıtla", "file-text", "yz"],
+  CONDITIONAL: ["Koşul", "git-branch", "kontrol"], REDIRECT_TO_FLOW: ["Başka akışa yönlendir", "corner-up-right", "kontrol"],
+  API_CALL: ["API isteği", "globe", "veri"], UPDATE_CONVERSATION: ["Görüşmeyi güncelle", "pencil", "veri"], GET_FILTER_VOCABULARY: ["Filtre değerlerini al", "filter", "veri"],
+  LOOKUP_ROWS: ["Satır ara", "table", "veri"], APPEND_ROW: ["Satır ekle", "table-2", "veri"], ASSIGN_USER: ["Kullanıcıya ata", "user-check", "veri"],
+  CX_ASSIGN_TO_GROUP: ["Gruba ata", "users", "cx"], CX_ASSIGN_TO_AGENT: ["Temsilciye ata", "user-check", "cx"], CX_ARCHIVE_CONVERSATION: ["Görüşmeyi arşivle", "archive", "cx"],
+  CX_UNARCHIVE_CONVERSATION: ["Arşivden çıkar", "archive-restore", "cx"], CX_UPDATE_CONVERSATION_CUSTOM_FIELDS: ["Görüşme alanlarını güncelle", "list", "cx"],
+  CX_UPDATE_CUSTOMER: ["Müşteriyi güncelle", "user", "cx"], CX_UPDATE_CUSTOMER_CUSTOM_FIELDS: ["Müşteri alanlarını güncelle", "list", "cx"],
+};
+const OPER = { CONTAINS: "içerir", NOT_CONTAINS: "içermez", EQUALS: "eşittir", NOT_EQUALS: "eşit değil", STARTS_WITH: "ile başlar", ENDS_WITH: "ile biter",
+  IS_EMPTY: "boş", IS_NOT_EMPTY: "dolu", EXISTS: "var", NOT_EXISTS: "yok", REGEX: "regex", MATCHES_REGEX: "regex", GREATER_THAN: "büyük", LESS_THAN: "küçük" };
+const GDURUM = { RESOLVED: "Çözüldü", OPEN: "Açık", PENDING: "Bekliyor", ON_HOLD: "Beklemeye alındı", NEW: "Yeni" };
+const ALAN = { messages: "Mesajlar", text: "Metin", options: "Seçenekler", request: "İstek", url: "Adres", method: "Yöntem", headers: "Başlıklar", body: "Gövde",
+  response_mapping: "Yanıt → değişken", on_failed: "Hata olursa", conditions: "Koşullar", criteria: "Ölçütler", operator: "Operatör", variable: "Değişken",
+  value: "Değer", key: "Anahtar", match_any: "Herhangi biri yeter", status: "Durum", metafields: "Özel alanlar", idle_time: "Bekleme (sn)",
+  for_one_time: "Bir kez çalıştır", reset_on_interaction: "Yanıt verince yeniden etkinleştir", ignore_skip_flow: "Temsilci devraldıysa da çalıştır",
+  tool_actions: "Araç dalları", name: "Ad", assistant_id: "Asistan", flow_id: "Akış", query: "Sorgu", result_limit: "Sonuç sayısı", result_mode: "Sonuç biçimi",
+  collection_group_id: "Koleksiyon", filter_groups: "Filtreler", should_halt: "Müşteri yanıtını bekle", next_action_id: "Sonraki düğüm", user_input: "Kullanıcı girdisi",
+  is_enabled: "Açık", should_set_variable: "Değişkene yaz", auto_translate: "Otomatik çeviri", is_internal: "Yalnız iç not", pagination: "Sayfalama",
+  content: "İçerik", type: "Tür", skills: "Beceriler", fixed_skills: "Sabit beceriler" };
+const kisalt = (s, n = 90) => { s = String(s ?? ""); return s.length > n ? s.slice(0, n) + "…" : s; };
+const olcut = c => `${esc(c.variable)} <b>${esc(OPER[c.operator] || String(c.operator || "").toLowerCase())}</b> ${c.value != null && c.value !== "" ? `"${esc(kisalt(c.value, 40))}"` : ""}`;
+
+// Bir düğümün bütün çıkışları: [{etiket, hedef}]. etiket boşsa düğümün kendi ana çıkışıdır.
+function cikislar(d) {
+  const a = d.arguments || {}, o = [];
+  if (d.next_action_id) o.push({ etiket: "", hedef: d.next_action_id });
+  (a.conditions || []).forEach((k, i) => o.push({ etiket: `${i + 1}. ${(k.criteria || []).map(olcut).join(k.match_any ? " ya da " : " ve ")}`, hedef: k.next_action_id, html: true }));
+  if (d.type === "CONDITIONAL") o.push({ etiket: "Değilse", hedef: a.next_action_id });
+  else if (a.next_action_id) o.push({ etiket: d.type === "API_CALL" ? "Başarılı" : "", hedef: a.next_action_id });
+  (a.messages || []).forEach(m => (m.content?.options || []).forEach(s => o.push({ etiket: s.text, hedef: s.next_action_id })));
+  (a.tool_actions || []).forEach(t => o.push({ etiket: t.name, hedef: t.next_action_id, arac: true }));
+  if (a.on_failed) o.push({ etiket: "Hata olursa", hedef: a.on_failed.next_action_id, hata: true });
+  return o;
+}
+function ozet(d) {
+  const a = d.arguments || {};
+  switch (d.type) {
+    case "SEND_MESSAGE": return (a.messages || []).map(m => esc(kisalt(m.content?.text, 140))).join("<hr>") + (a.should_halt ? '<div class="soluk">Yanıt bekler</div>' : "");
+    case "API_CALL": { const u = a.request?.url || ""; return `<b>${esc(a.request?.method)}</b> ${esc(kisalt(u.replace(/^https?:\/\/[^/]+/, ""), 60))}<div class="soluk">${esc((u.match(/^https?:\/\/([^/]+)/) || [])[1] || "")}</div>`; }
+    case "UPDATE_CONVERSATION": return (a.status ? `Durum: <b>${esc(GDURUM[a.status] || a.status)}</b>` : "") + (a.metafields || []).map(m => `<div>${esc(m.key)} = ${esc(kisalt(m.value, 40))}</div>`).join("");
+    case "IDLE": return `${Math.round((a.idle_time || 0) / 60)} dk sessizlik${a.for_one_time ? " · bir kez" : ""}`;
+    case "REDIRECT_TO_FLOW": return `Akış #${esc(a.flow_id)}`;
+    case "SEARCH_DOCUMENTS": case "REPLY_FROM_DOCUMENTS": return `Sorgu: ${esc(kisalt(a.query, 70))}`;
+    case "AGENTIC_AI": return `Asistan #${esc(a.assistant_id)} · ${(a.tool_actions || []).length} araç dalı`;
+    case "START": return "Yeni görüşme açılınca";
+    case "FALLBACK": return "Müşteri mesaj yazınca";
+    default: return "";
+  }
+}
+function alanAgaci(v, derin = 0) {
+  if (v === null || v === undefined || v === "") return '<span class="soluk">—</span>';
+  if (typeof v === "boolean") return v ? "Evet" : "Hayır";
+  if (typeof v !== "object") return `<span class="deger">${esc(v)}</span>`;
+  if (Array.isArray(v)) return v.length ? `<ol>${v.map(x => `<li>${alanAgaci(x, derin + 1)}</li>`).join("")}</ol>` : '<span class="soluk">boş</span>';
+  return `<dl>${Object.entries(v).map(([k, x]) => `<dt>${esc(ALAN[k] || k)}</dt><dd>${k === "operator" ? esc(OPER[x] || x) : k === "status" ? esc(GDURUM[x] || x) : alanAgaci(x, derin + 1)}</dd>`).join("")}</dl>`;
+}
+
+async function akislar() {
+  const { data, error } = await sb.from("b_akis").select("id,ad,kaynak,vivollo_id,aciklama,guncellendi,dugumler").order("id");
+  if (error) throw error;
+  $("#icerik").innerHTML = `<div class="baslik"><h1>Akışlar</h1></div>
+    <p class="alt-metin">Vivollo'daki akışların kopyası. Yalnız görüntüleme: burada hiçbir şey canlıya gitmez.</p>
+    <div class="kart"><table><tr><th>Ad</th><th>Kaynak</th><th>Düğüm</th><th>Güncellendi</th></tr>
+    ${(data || []).map(r => `<tr class="tik" data-id="${r.id}"><td><b>${esc(r.ad)}</b>${r.aciklama ? `<div class="kisa">${esc(r.aciklama)}</div>` : ""}</td>
+      <td>${esc(r.kaynak)}${r.vivollo_id ? ` #${r.vivollo_id}` : ""}</td><td>${(r.dugumler || []).length}</td><td class="soluk">${tarih(r.guncellendi)}</td></tr>`).join("") || '<tr><td colspan="4" class="bos">Akış yok.</td></tr>'}</table></div>`;
+  document.querySelectorAll("tr.tik").forEach(t => t.onclick = () => git("akis", t.dataset.id));
+}
+
+async function akisGoster(id) {
+  const { data: r, error } = await sb.from("b_akis").select("*").eq("id", id).maybeSingle();
+  if (error) throw error; if (!r) throw new Error("Akış bulunamadı");
+  const dl = r.dugumler || [], harita = Object.fromEntries(dl.map(d => [d.id, d]));
+  const xs = dl.map(d => d.node_payload?.position?.x || 0), ys = dl.map(d => d.node_payload?.position?.y || 0);
+  const ox = 40 - Math.min(...xs), oy = 40 - Math.min(...ys), W = Math.max(...xs) + ox + 420, H = Math.max(...ys) + oy + 600;
+  $("#icerik").innerHTML = `<div class="baslik"><button class="ikincil" id="a-geri"><i data-lucide="arrow-left"></i>Akışlar</button><h1>${esc(r.ad)}</h1>
+      <span class="etiket">${dl.length} düğüm</span><span class="etiket sari">Salt görüntüleme</span>
+      <div class="sag"><input id="a-ara" placeholder="Düğümde ara (metin, araç, #id)" style="width:240px">
+      <button class="ikincil" id="a-kucult" title="Uzaklaş"><i data-lucide="zoom-out"></i></button><button class="ikincil" id="a-buyut" title="Yakınlaş"><i data-lucide="zoom-in"></i></button>
+      <button class="ikincil" id="a-sigdir"><i data-lucide="maximize"></i>Sığdır</button></div></div>
+    <div class="akis-alan" id="a-alan"><div class="akis-tuval" id="a-tuval" style="width:${W}px;height:${H}px"><svg class="akis-ok" id="a-svg" width="${W}" height="${H}">
+      <defs><marker id="uc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a1a1aa"/></marker>
+      <marker id="uc2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8b4cfc"/></marker></defs></svg>
+    ${dl.map(d => { const t = DUGUM[d.type] || [d.type, "box", "veri"], p = d.node_payload?.position || {}, c = cikislar(d).filter(x => x.etiket);
+      return `<div class="dugum ${t[2]}" data-id="${d.id}" style="left:${(p.x || 0) + ox}px;top:${(p.y || 0) + oy}px">
+        <div class="d-bas"><i data-lucide="${t[1]}"></i><b>${esc(t[0])}</b><span class="soluk">#${d.id}</span></div>
+        ${ozet(d) ? `<div class="d-govde">${ozet(d)}</div>` : ""}
+        ${c.length ? `<div class="d-cikis">${c.map(x => `<div class="cikis${x.hata ? " hata-dal" : ""}${x.arac ? " arac" : ""}${x.hedef ? "" : " bos-dal"}" data-hedef="${x.hedef || ""}">${x.html ? x.etiket : esc(kisalt(x.etiket, 60))}</div>`).join("")}</div>` : ""}
+      </div>`; }).join("")}</div>
+    <aside class="akis-detay" id="a-detay" hidden></aside></div>`;
+  $("#a-geri").onclick = () => git("akis");
+  ikon();
+  // oklar: düğüm konumları ölçeğe bağlı değil (offset), bir kez çizilir
+  const svg = $("#a-svg"), ns = "http://www.w3.org/2000/svg", oklar = [];
+  document.querySelectorAll(".dugum").forEach(n => {
+    const kaynak = +n.dataset.id, x0 = n.offsetLeft, y0 = n.offsetTop, d = harita[kaynak];
+    const ciz = (hedef, cy, sinif) => {
+      const h = document.querySelector(`.dugum[data-id="${hedef}"]`); if (!h) return;
+      const sx = x0 + n.offsetWidth, sy = y0 + cy, tx = h.offsetLeft, ty = h.offsetTop + 18, dx = Math.max(50, Math.abs(tx - sx) / 2);
+      const p = document.createElementNS(ns, "path");
+      p.setAttribute("d", `M${sx} ${sy}C${sx + dx} ${sy},${tx - dx} ${ty},${tx} ${ty}`); p.setAttribute("class", sinif || ""); p.setAttribute("marker-end", "url(#uc)");
+      svg.appendChild(p); oklar.push({ p, kaynak, hedef: +hedef });
+    };
+    const ana = cikislar(d).filter(x => !x.etiket && x.hedef);
+    ana.forEach(x => ciz(x.hedef, 18));
+    n.querySelectorAll(".cikis[data-hedef]").forEach(c => c.dataset.hedef && ciz(c.dataset.hedef, c.offsetTop + c.offsetHeight / 2, c.classList.contains("hata-dal") ? "hata-ok" : ""));
+  });
+  // kaydır / yakınlaştır
+  const alan = $("#a-alan"), tuval = $("#a-tuval"); let o = { x: 0, y: 0, k: 1 };
+  const uygula = () => tuval.style.transform = `translate(${o.x}px,${o.y}px) scale(${o.k})`;
+  const yakinlas = (k, cx = alan.clientWidth / 2, cy = alan.clientHeight / 2) => { k = Math.min(1.6, Math.max(0.15, k)); o.x = cx - (cx - o.x) * k / o.k; o.y = cy - (cy - o.y) * k / o.k; o.k = k; uygula(); };
+  const sigdir = () => { o.k = Math.min(1, (alan.clientWidth - 20) / W, (alan.clientHeight - 20) / H); o.x = (alan.clientWidth - W * o.k) / 2; o.y = 10; uygula(); };
+  alan.onwheel = e => { e.preventDefault(); if (e.ctrlKey || e.metaKey) { const b = alan.getBoundingClientRect(); yakinlas(o.k * Math.exp(-e.deltaY / 200), e.clientX - b.left, e.clientY - b.top); } else { o.x -= e.deltaX; o.y -= e.deltaY; uygula(); } };
+  let surukle = null;
+  alan.onpointerdown = e => { if (e.target.closest(".dugum,.akis-detay")) return; surukle = { x: e.clientX - o.x, y: e.clientY - o.y }; alan.classList.add("tutuldu"); };
+  window.onpointermove = e => { if (!surukle || !document.body.contains(alan)) return; o.x = e.clientX - surukle.x; o.y = e.clientY - surukle.y; uygula(); };
+  window.onpointerup = () => { surukle = null; alan.classList.remove("tutuldu"); };
+  $("#a-buyut").onclick = () => yakinlas(o.k * 1.25); $("#a-kucult").onclick = () => yakinlas(o.k / 1.25); $("#a-sigdir").onclick = sigdir;
+  // açılışta okunur ölçekte ilk tetikleyiciye odaklan; bütün akış için "Sığdır"
+  const ilk = dl.find(d => d.type === "START") || dl.find(d => DUGUM[d.type]?.[2] === "tetik") || dl[0];
+  { const n = document.querySelector(`.dugum[data-id="${ilk.id}"]`); o.k = 0.8; o.x = 30 - n.offsetLeft * o.k; o.y = alan.clientHeight / 3 - n.offsetTop * o.k; uygula(); }
+  // seçim + ayrıntı paneli
+  const sec = id => {
+    document.querySelectorAll(".dugum").forEach(n => n.classList.toggle("secili", +n.dataset.id === id));
+    oklar.forEach(a => { const v = a.kaynak === id || a.hedef === id; a.p.classList.toggle("vurgu", v); a.p.setAttribute("marker-end", v ? "url(#uc2)" : "url(#uc)"); });
+    const d = harita[id], t = DUGUM[d.type] || [d.type, "box"], gelen = oklar.filter(a => a.hedef === id).map(a => a.kaynak);
+    const git2 = x => `<button class="baglanti" data-git="${x}">#${x} ${esc((DUGUM[harita[x]?.type] || [harita[x]?.type])[0])}</button>`;
+    const det = $("#a-detay"); det.hidden = false;
+    det.innerHTML = `<div class="d-ust"><i data-lucide="${t[1]}"></i><h2>${esc(t[0])} <span class="soluk">#${d.id}</span></h2><button id="a-kapat" title="Kapat"><i data-lucide="x"></i></button></div>
+      <div class="d-bolum"><div class="d-baslik">Nereden gelir</div>${[...new Set(gelen)].map(git2).join("") || '<span class="soluk kucuk">Hiçbir düğüm buraya bağlanmıyor (tetikleyici ya da kopuk).</span>'}</div>
+      <div class="d-bolum"><div class="d-baslik">Nereye gider</div>${cikislar(d).map(x => `<div class="kucuk">${x.etiket ? (x.html ? x.etiket : esc(x.etiket)) + " → " : ""}${x.hedef ? git2(x.hedef) : '<span class="soluk">bağlı değil (burada durur)</span>'}</div>`).join("") || '<span class="soluk kucuk">Burada biter.</span>'}</div>
+      <div class="d-bolum"><div class="d-baslik">Ayarlar</div><div class="alanlar">${alanAgaci(d.arguments)}</div></div>
+      <details class="d-bolum"><summary class="d-baslik">Ham JSON</summary><pre>${esc(JSON.stringify(d, null, 1))}</pre></details>`;
+    det.querySelectorAll("[data-git]").forEach(b => b.onclick = () => odakla(+b.dataset.git));
+    $("#a-kapat").onclick = () => { det.hidden = true; document.querySelectorAll(".dugum.secili").forEach(n => n.classList.remove("secili")); oklar.forEach(a => { a.p.classList.remove("vurgu"); a.p.setAttribute("marker-end", "url(#uc)"); }); };
+    ikon();
+  };
+  const odakla = id => { const n = document.querySelector(`.dugum[data-id="${id}"]`); if (!n) return; if (o.k < 0.6) o.k = 0.8;
+    o.x = alan.clientWidth / 2 - 180 - (n.offsetLeft + n.offsetWidth / 2) * o.k; o.y = alan.clientHeight / 2 - (n.offsetTop + 40) * o.k; uygula(); sec(id); };
+  document.querySelectorAll(".dugum").forEach(n => n.onclick = () => sec(+n.dataset.id));
+  $("#a-ara").oninput = e => { const q = e.target.value.trim().toLocaleLowerCase("tr");
+    document.querySelectorAll(".dugum").forEach(n => n.classList.toggle("soluk-dugum", !!q && !(("#" + n.dataset.id + " " + JSON.stringify(harita[n.dataset.id]) + " " + n.textContent).toLocaleLowerCase("tr").includes(q)))); };
+  $("#a-ara").onkeydown = e => { if (e.key === "Enter") { const q = e.target.value.trim().replace(/^#/, ""); const n = document.querySelector(`.dugum[data-id="${CSS.escape(q)}"]`) || document.querySelector(".dugum:not(.soluk-dugum)"); if (n && e.target.value.trim()) odakla(+n.dataset.id); } };
+}
