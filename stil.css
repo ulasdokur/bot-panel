@@ -116,18 +116,18 @@ dialog::backdrop{background:#0004}
 .dugum.soluk-dugum{opacity:.25}
 .dugum.tetik{border-left-color:#09724e}.dugum.mesaj{border-left-color:#8b4cfc}.dugum.yz{border-left-color:#2563eb}
 .dugum.kontrol{border-left-color:#d97706}.dugum.veri{border-left-color:#71717a}.dugum.cx{border-left-color:#0d9488}
-.d-bas{display:flex;align-items:center;gap:6px;padding:8px 10px 6px}.d-bas span{margin-left:auto;font-size:11px}
+.d-bas{position:relative;display:flex;align-items:center;gap:6px;padding:8px 10px 6px}.d-bas .no{margin-left:auto;font-size:11px}
 .dugum.tetik .d-bas svg{color:#09724e}.dugum.mesaj .d-bas svg{color:#8b4cfc}.dugum.yz .d-bas svg{color:#2563eb}
 .dugum.kontrol .d-bas svg{color:#d97706}.dugum.cx .d-bas svg{color:#0d9488}
 .d-govde{padding:0 10px 8px;color:var(--metin2);white-space:pre-wrap;word-break:break-word;max-height:120px;overflow:hidden}
 .d-govde hr{border:0;border-top:1px solid var(--cizgi);margin:5px 0}
 .d-cikis{border-top:1px solid var(--cizgi)}
-.cikis{padding:4px 10px;border-bottom:1px solid var(--cizgi);color:var(--metin2);word-break:break-word}.cikis:last-child{border-bottom:0}
+.cikis{position:relative;padding:4px 10px;border-bottom:1px solid var(--cizgi);color:var(--metin2);word-break:break-word}.cikis:last-child{border-bottom:0}
 .cikis.arac{font-family:ui-monospace,Menlo,monospace;font-size:11px}
 .cikis.hata-dal{color:var(--hata)}.cikis.bos-dal{color:var(--soluk);font-style:italic}
 .akis-detay{position:absolute;top:0;right:0;bottom:0;width:380px;background:var(--yuzey);border-left:1px solid var(--cizgi);overflow:auto;cursor:default;box-shadow:-4px 0 12px #0000000a}
 .akis-detay .d-ust{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--cizgi);position:sticky;top:0;background:var(--yuzey)}
-.akis-detay .d-ust button{margin-left:auto}
+
 .d-bolum{padding:12px 16px;border-bottom:1px solid var(--cizgi)}
 .d-baslik{font-size:11px;font-weight:500;color:var(--soluk);margin-bottom:6px;cursor:default}
 details.d-bolum summary{cursor:pointer}
@@ -140,3 +140,26 @@ details.d-bolum summary{cursor:pointer}
 .alanlar dd dl,.alanlar li dl{display:block;padding-left:8px;border-left:2px solid var(--cizgi)}
 .alanlar dd dl>dt,.alanlar li dl>dt{margin-top:4px}
 .alanlar dd dl>dd,.alanlar li dl>dd{word-break:break-all}
+
+/* akış düzenleyici */
+.akis-arac{position:absolute;top:10px;left:10px;z-index:3;display:flex;gap:8px;align-items:center;background:var(--yuzey);border:1px solid var(--cizgi);border-radius:10px;padding:6px 8px;cursor:default;max-width:calc(100% - 420px);flex-wrap:wrap;width:max-content}
+.akis-arac select{height:32px;padding:0 8px}
+.uyari-metin{color:var(--uyari)}
+.nokta{position:absolute;right:-7px;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:var(--yuzey);border:2px solid #a1a1aa;cursor:crosshair}
+.nokta:hover{border-color:var(--marka);background:var(--marka-zemin)}
+.akis-alan.salt .nokta{display:none}
+.akis-ok path.gecici{stroke:var(--marka);stroke-dasharray:6 4;stroke-width:2}
+.d-bas .etiket{font-size:10px;line-height:16px;padding:0 5px}
+.f label{margin-top:10px}
+.f-grup{border:1px solid var(--cizgi);border-radius:9px;padding:9px;margin-bottom:10px}
+.f-ust{display:flex;align-items:center;gap:8px;margin-bottom:6px}.f-ust select{margin-left:auto;height:28px;padding:0 6px}
+.f-alt{font-size:11px;color:var(--soluk);margin:10px 0 4px}
+.f-satir{display:flex;gap:6px;align-items:center;margin-top:5px}.f-satir>*{min-width:0}.f-satir label{flex:1;margin-top:0}
+.f-satir.uc input{flex:1.2}.f-satir.uc select{flex:1}
+.f input,.f select,.f textarea,.f-bag select{padding:5px 8px;font-size:12px}
+.sil-b{flex:none;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;color:var(--soluk)}.sil-b:hover{background:var(--hata-zemin);color:var(--hata)}
+.ekle-b{margin-top:6px;color:var(--marka-metin)}
+.kutu{display:flex;align-items:center;gap:7px;font-weight:400;color:var(--metin);margin-top:10px}.kutu input{width:auto;margin:0}
+.f-bag{display:grid;grid-template-columns:1fr auto;gap:2px 6px;margin-bottom:8px}.f-bag>span{grid-column:1/-1;color:var(--metin2)}
+textarea.kod{font:11px/1.5 ui-monospace,Menlo,monospace}
+.akis-detay .d-ust .ince{margin-left:0}.akis-detay .d-ust h2{margin-right:auto}
