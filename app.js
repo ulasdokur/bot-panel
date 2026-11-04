@@ -374,15 +374,17 @@ async function akisGoster(id) {
   const gor = () => A.salt ? A.asil : A.dl;
   $("#icerik").innerHTML = `<div class="baslik"><button class="ikincil" id="a-geri"><i data-lucide="arrow-left"></i>Akışlar</button><h1>${esc(r.ad)}</h1>
       <div class="secenek" id="a-gorunum"><button data-g="taslak" class="secili">Taslak</button><button data-g="asil">Vivollo kopyası</button></div>
-      <div class="sag"><input id="a-ara" placeholder="Düğümde ara (metin, araç, #id)" style="width:220px">
-      <button class="ikincil" id="a-kucult" title="Uzaklaş"><i data-lucide="zoom-out"></i></button><button class="ikincil" id="a-buyut" title="Yakınlaş"><i data-lucide="zoom-in"></i></button>
-      <button class="ikincil" id="a-sigdir"><i data-lucide="maximize"></i>Sığdır</button></div></div>
+      <div class="sag"><input id="a-ara" placeholder="Ara: metin, araç, #id" style="width:240px"></div></div>
     <div class="akis-alan" id="a-alan">
-      <div class="akis-arac" id="a-arac"><select id="a-ekle" style="width:170px"><option value="">+ Düğüm ekle</option>${PALET.map(t => `<option value="${t}">${esc(DUGUM[t][0])}</option>`).join("")}</select>
-        <button class="ikincil" id="a-geriAl" title="Geri al (Cmd+Z)"><i data-lucide="undo-2"></i>Geri al</button>
-        <button class="birincil" id="a-kaydet"><i data-lucide="save"></i>Taslağı kaydet</button>
-        <button class="tehlike" id="a-taslakSil" ${r.taslak ? "" : "hidden"}><i data-lucide="trash-2"></i>Taslağı sil</button>
-        <span class="kucuk" id="a-durum"></span></div>
+      <div class="akis-arac" id="a-arac">
+        <div class="a-grup"><select id="a-ekle" class="a-duzen" style="width:170px"><option value="">+ Düğüm ekle</option>${PALET.map(t => `<option value="${t}">${esc(DUGUM[t][0])}</option>`).join("")}</select>
+          <button class="ikincil a-duzen" id="a-geriAl" title="Geri al (Cmd+Z)"><i data-lucide="undo-2"></i>Geri al</button><span class="a-ayrac a-duzen"></span>
+          <button class="ikincil" id="a-toparla" title="Bütün düğümleri akış sırasına göre soldan sağa dizer, çakışmaları açar"><i data-lucide="wand-sparkles"></i>Toparla</button></div>
+        <span class="kucuk a-durum" id="a-durum"></span>
+        <div class="a-grup"><button class="tehlike a-duzen" id="a-taslakSil" ${r.taslak ? "" : "hidden"}><i data-lucide="trash-2"></i>Taslağı sil</button>
+          <button class="birincil a-duzen" id="a-kaydet"><i data-lucide="save"></i>Taslağı kaydet</button></div></div>
+      <div class="akis-zoom"><button id="a-kucult" title="Uzaklaş"><i data-lucide="minus"></i></button><button id="a-oran" title="%100'e dön">80%</button>
+        <button id="a-buyut" title="Yakınlaş"><i data-lucide="plus"></i></button><span class="a-ayrac"></span><button id="a-sigdir" title="Bütün akışı ekrana sığdır"><i data-lucide="maximize"></i></button></div>
       <div class="akis-tuval" id="a-tuval"><svg class="akis-ok" width="1" height="1">
         <defs><marker id="uc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a1a1aa"/></marker>
         <marker id="uc2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8b4cfc"/></marker></defs>
@@ -431,8 +433,8 @@ async function akisGoster(id) {
     }
     $("#a-durum").innerHTML = parca.join(" · ");
     $("#a-geriAl").disabled = !A.gecmis.length; $("#a-kaydet").disabled = !A.degisti;
-    alan.classList.toggle("salt", A.salt); $("#a-ekle").disabled = A.salt;
-    document.querySelectorAll("#a-arac button").forEach(b => b.hidden = b.id === "a-taslakSil" ? (!r.taslak || A.salt) : A.salt);
+    alan.classList.toggle("salt", A.salt);
+    document.querySelectorAll("#a-arac .a-duzen").forEach(b => b.hidden = b.id === "a-taslakSil" ? (!r.taslak || A.salt) : A.salt);
   };
   const yenile = () => {
     A.harita = Object.fromEntries(gor().map(d => [d.id, d])); if (A.secili != null && !A.harita[A.secili]) { A.secili = null; det.hidden = true; }
@@ -447,14 +449,63 @@ async function akisGoster(id) {
 
   // ----- kaydır / yakınlaştır -----
   const tuval = $("#a-tuval"); let o = { x: 0, y: 0, k: 0.8 }, surukle = null;
-  const uygula = () => tuval.style.transform = `translate(${o.x}px,${o.y}px) scale(${o.k})`;
+  const uygula = () => { tuval.style.transform = `translate(${o.x}px,${o.y}px) scale(${o.k})`; $("#a-oran").textContent = Math.round(o.k * 100) + "%"; };
   const yakinlas = (k, cx = alan.clientWidth / 2, cy = alan.clientHeight / 2) => { k = Math.min(1.6, Math.max(0.12, k)); o.x = cx - (cx - o.x) * k / o.k; o.y = cy - (cy - o.y) * k / o.k; o.k = k; uygula(); };
-  const sinir = () => { const ns = [...document.querySelectorAll("#a-dugumler .dugum")]; return ns.length ? { x0: Math.min(...ns.map(n => n.offsetLeft)), y0: Math.min(...ns.map(n => n.offsetTop)), x1: Math.max(...ns.map(n => n.offsetLeft + n.offsetWidth)), y1: Math.max(...ns.map(n => n.offsetTop + n.offsetHeight)) } : { x0: 0, y0: 0, x1: 1, y1: 1 }; };
-  const sigdir = () => { const b = sinir(), w = b.x1 - b.x0 + 80, h = b.y1 - b.y0 + 140; o.k = Math.min(1, alan.clientWidth / w, alan.clientHeight / h); o.x = (alan.clientWidth - w * o.k) / 2 - (b.x0 - 40) * o.k; o.y = 60 - (b.y0 - 40) * o.k; uygula(); };
+  // sınırlar DOM konumundan değil veriden: toparlama animasyonu sürerken de doğru
+  const sinir = () => { const ns = [...document.querySelectorAll("#a-dugumler .dugum")].map(n => { const p = A.harita[n.dataset.id]?.node_payload?.position || {}; return { x: p.x || 0, y: p.y || 0, w: n.offsetWidth, h: n.offsetHeight }; });
+    return ns.length ? { x0: Math.min(...ns.map(n => n.x)), y0: Math.min(...ns.map(n => n.y)), x1: Math.max(...ns.map(n => n.x + n.w)), y1: Math.max(...ns.map(n => n.y + n.h)) } : { x0: 0, y0: 0, x1: 1, y1: 1 }; };
+  const UST = 52; // üst araç şeridi
+  const sigdir = () => { const b = sinir(), w = b.x1 - b.x0 + 80, h = b.y1 - b.y0 + 80, ah = alan.clientHeight - UST - 16;
+    o.k = Math.min(1, Math.max(0.12, Math.min(alan.clientWidth / w, ah / h))); o.x = (alan.clientWidth - w * o.k) / 2 - (b.x0 - 40) * o.k; o.y = UST + 8 + (ah - h * o.k) / 2 - (b.y0 - 40) * o.k; uygula(); };
+
+  // ----- toparla: katmanlı düzen (soldan sağa). Tetikleyiciden başlar, her düğüm kendisine gelen en uzun yolun sütununa;
+  // sütun içinde düğüm, kendisini çağıran çıkışın hizasına yakın durur; kopuk parçalar alt alta, tek başına kalanlar en altta sıra halinde.
+  const toparla = liste => {
+    const hz = Object.fromEntries(liste.map(d => [d.id, d])), el = id => document.querySelector(`#a-dugumler .dugum[data-id="${id}"]`);
+    const boy = id => el(id)?.offsetHeight || 80, port = (id, ci) => { const c = el(id)?.querySelector(`[data-c="${ci}"]`); return c ? c.offsetTop + c.offsetHeight / 2 : 18; };
+    const cik = {}, gir = {}; liste.forEach(d => { cik[d.id] = []; gir[d.id] = []; });
+    liste.forEach(d => cikislar(d).forEach((x, ci) => { if (x.hedef != null && hz[x.hedef] && x.hedef !== d.id && !cik[d.id].some(e => e.h === x.hedef)) { cik[d.id].push({ h: x.hedef, ci }); gir[x.hedef].push(d.id); } }));
+    const pos = d => d.node_payload?.position || {}, kok = d => d.type === "START" ? 0 : TETIK.has(d.type) || d.type === "IDLE" ? 1 : gir[d.id].length ? 3 : 2;
+    const sira = [...liste].sort((a, b) => kok(a) - kok(b) || (pos(a).x || 0) - (pos(b).x || 0) || (pos(a).y || 0) - (pos(b).y || 0));
+    const si = Object.fromEntries(sira.map((d, i) => [d.id, i]));
+    // geri dönen okları (döngü) bul, sütun hesabında sayma
+    const dz = {}, geri = new Set(), topo = [];
+    const dfs = id => { dz[id] = 1; for (const e of cik[id]) { if (dz[e.h] === 1) geri.add(id + ">" + e.h); else if (!dz[e.h]) dfs(e.h); } dz[id] = 2; topo.push(id); };
+    sira.forEach(d => { if (!dz[d.id]) dfs(d.id); }); topo.reverse();
+    const kat = {}; topo.forEach(id => kat[id] ??= 0);
+    topo.forEach(id => cik[id].forEach(e => { if (!geri.has(id + ">" + e.h)) kat[e.h] = Math.max(kat[e.h], kat[id] + 1); }));
+    // bağlı parçalar
+    const ata = {}, bul = x => ata[x] === x ? x : (ata[x] = bul(ata[x])); liste.forEach(d => ata[d.id] = d.id);
+    liste.forEach(d => cik[d.id].forEach(e => ata[bul(d.id)] = bul(e.h)));
+    const parcalar = Object.values(liste.reduce((m, d) => ((m[bul(d.id)] ||= []).push(d.id), m), {})).sort((a, b) => Math.min(...a.map(i => si[i])) - Math.min(...b.map(i => si[i])));
+    const GEN = 300, ARA_X = 110, ARA_Y = 28, yeni = {}; let ustY = 0; const tekler = [];
+    parcalar.forEach(p => {
+      if (p.length === 1) { tekler.push(p[0]); return; }
+      const y = {}, kol = {}; p.forEach(id => (kol[kat[id]] ||= []).push(id)); let altY = ustY;
+      Object.keys(kol).map(Number).sort((a, b) => a - b).forEach(k => {
+        const istek = id => { const ic = gir[id].filter(g => y[g] != null && !geri.has(g + ">" + id)); if (!ic.length) return null;
+          return ic.reduce((t, g) => t + y[g] + port(g, cik[g].find(e => e.h === id).ci) - 18, 0) / ic.length; };
+        const ks = kol[k].map(id => ({ id, i: istek(id) })).sort((a, b) => (a.i ?? 1e9) - (b.i ?? 1e9) || si[a.id] - si[b.id]);
+        let alt = -Infinity;
+        ks.forEach(({ id, i }) => { y[id] = Math.max(i ?? ustY, alt === -Infinity ? ustY : alt + ARA_Y); alt = y[id] + boy(id); altY = Math.max(altY, alt); yeni[id] = { x: k * (GEN + ARA_X), y: Math.round(y[id]) }; });
+      });
+      ustY = altY + 120;
+    });
+    tekler.sort((a, b) => si[a] - si[b]).forEach((id, i) => { const s = i % 4; if (s === 0 && i) ustY += Math.max(...tekler.slice(i - 4, i).map(boy)) + 40; yeni[id] = { x: s * (GEN + ARA_X), y: ustY }; });
+    liste.forEach(d => { if (yeni[d.id]) d.node_payload = { ...(d.node_payload || {}), position: yeni[d.id] }; });
+  };
+  const konumUygula = anim => {
+    const dn = $("#a-dugumler"); if (anim) { dn.classList.add("kayar"); tuval.classList.add("kayar"); }
+    gor().forEach(d => { const n = document.querySelector(`#a-dugumler .dugum[data-id="${d.id}"]`), p = d.node_payload?.position || {}; if (n) { n.style.left = (p.x || 0) + "px"; n.style.top = (p.y || 0) + "px"; } });
+    sigdir();
+    if (!anim) return okCiz();
+    const t0 = performance.now(), kare = () => { okCiz(); if (performance.now() - t0 < 470) requestAnimationFrame(kare); else { dn.classList.remove("kayar"); tuval.classList.remove("kayar"); okCiz(); } };
+    requestAnimationFrame(kare);
+  };
   const tuvalNokta = e => { const b = alan.getBoundingClientRect(); return { x: (e.clientX - b.left - o.x) / o.k, y: (e.clientY - b.top - o.y) / o.k }; };
   alan.onwheel = e => { if (e.target.closest(".akis-detay")) return; e.preventDefault(); if (e.ctrlKey || e.metaKey) { const b = alan.getBoundingClientRect(); yakinlas(o.k * Math.exp(-e.deltaY / 200), e.clientX - b.left, e.clientY - b.top); } else { o.x -= e.deltaX; o.y -= e.deltaY; uygula(); } };
   alan.onpointerdown = e => {
-    if (e.button !== 0 || e.target.closest(".akis-detay,.akis-arac")) return;
+    if (e.button !== 0 || e.target.closest(".akis-detay,.akis-arac,.akis-zoom")) return;
     const nk = e.target.closest(".nokta"), n = e.target.closest(".dugum");
     if (nk && !A.salt) { e.preventDefault(); surukle = { tur: "bag", id: +n.dataset.id, c: +nk.closest("[data-c]").dataset.c, n, el: nk.closest("[data-c]") }; return; }
     if (n) { surukle = { tur: "dugum", id: +n.dataset.id, n, x: e.clientX, y: e.clientY, px: n.offsetLeft, py: n.offsetTop, oynadi: false }; return; }
@@ -506,6 +557,10 @@ async function akisGoster(id) {
   };
   $("#a-ekle").onchange = e => { if (e.target.value) ekle(e.target.value); e.target.value = ""; };
   $("#a-geriAl").onclick = geriAl;
+  $("#a-toparla").onclick = () => {
+    if (!A.salt) gecmisEkle(); toparla(gor()); konumUygula(true); durumYaz();
+    bildir(A.salt ? "Görünüm toparlandı; kopya değişmedi." : "Düğümler toparlandı. Beğenmezsen Geri al; kalsın istersen Taslağı kaydet.");
+  };
   $("#a-kaydet").onclick = async () => {
     await rpc("b_akis_taslak_kaydet", { p_id: r.id, p_dugumler: A.dl });
     r.taslak = structuredClone(A.dl); r.taslak_guncellendi = new Date().toISOString(); r.taslak_yazan = ben.email; A.degisti = false; durumYaz();
@@ -519,6 +574,7 @@ async function akisGoster(id) {
   document.querySelectorAll("#a-gorunum button").forEach(b => b.onclick = () => {
     A.salt = b.dataset.g === "asil"; document.querySelectorAll("#a-gorunum button").forEach(x => x.classList.toggle("secili", x === b));
     A.secili = null; det.hidden = true; yenile();
+    if (A.salt && !A.asilDizildi) { A.asilDizildi = true; toparla(A.asil); konumUygula(false); } // kopya yalnız ekranda dizilir, kaydedilmez
   });
 
   // ----- ayrıntı / düzenleme paneli -----
@@ -606,11 +662,13 @@ async function akisGoster(id) {
     document.querySelectorAll("#a-dugumler .dugum").forEach(n => n.classList.toggle("soluk-dugum", !!q && !(("#" + n.dataset.id + " " + JSON.stringify(A.harita[n.dataset.id]) + " " + n.textContent).toLocaleLowerCase("tr").includes(q)))); };
   $("#a-ara").oninput = araUygula;
   $("#a-ara").onkeydown = e => { if (e.key === "Enter") { const q = e.target.value.trim().replace(/^#/, ""); const n = document.querySelector(`#a-dugumler .dugum[data-id="${CSS.escape(q)}"]`) || document.querySelector("#a-dugumler .dugum:not(.soluk-dugum)"); if (n && q) odakla(+n.dataset.id); } };
-  $("#a-buyut").onclick = () => yakinlas(o.k * 1.25); $("#a-kucult").onclick = () => yakinlas(o.k / 1.25); $("#a-sigdir").onclick = sigdir;
+  $("#a-buyut").onclick = () => yakinlas(o.k * 1.25); $("#a-kucult").onclick = () => yakinlas(o.k / 1.25); $("#a-sigdir").onclick = sigdir; $("#a-oran").onclick = () => yakinlas(1);
 
   yenile();
+  // kayıtlı taslak yoksa Vivollo konumları bizim kutu boyumuza uymuyor (üst üste biniyor): açılışta düzenli diz, değişiklik sayma
+  if (!r.taslak) { toparla(A.dl); konumUygula(false); }
   // açılışta okunur ölçekte ilk tetikleyiciye odaklan; bütün akış için "Sığdır"
   const ilk = gor().find(d => d.type === "START") || gor().find(d => TETIK.has(d.type)) || gor()[0];
   const n0 = ilk && document.querySelector(`#a-dugumler .dugum[data-id="${ilk.id}"]`);
-  if (n0) { o.x = 30 - n0.offsetLeft * o.k; o.y = alan.clientHeight / 3 - n0.offsetTop * o.k; } uygula();
+  if (n0) { o.k = 0.8; o.x = 40 - n0.offsetLeft * o.k; o.y = UST + 70 - n0.offsetTop * o.k; } uygula();
 }
